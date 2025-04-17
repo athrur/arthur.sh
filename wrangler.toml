@@ -1,0 +1,6 @@
+name = "arthur-sh"
+pages_build_output_dir = "public"
+compatibility_date = "2025-04-17"
+
+[env.production.vars]
+UNSTABLE_PRE_BUILD = "asdf plugin add zola https://github.com/salasrod/asdf-zola && asdf install zola 0.20.0 && asdf global zola 0.20.0"
