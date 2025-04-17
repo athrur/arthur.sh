@@ -1,0 +1,22 @@
+title = "arthur.sh"
+theme = "apollo"
+taxonomies = [{ name = "tags" }]
+base_url = "https://arthur.sh"
+
+compile_sass = true
+
+build_search_index = false
+
+[markdown]
+highlight_code = true
+
+[extra]
+theme = "auto"
+socials = [
+   # { name = "github", url = "https://github.com/athrur/", icon = "github" },
+   # { name = "linkedin", url = "https://linkedin.com/in/arthur-robertson/", icon = "linkedin" },
+]
+menu = [
+  { name = "LinkedIn", url = "https://linkedin.com/in/arthur-robertson/", weight = 1, external = true },
+  # { name = "/projects", url = "/projects", weight = 2 },
+]
