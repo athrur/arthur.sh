@@ -1,8 +1,6 @@
-#!/bin/bash
-echo "Building Zola site..."
-zola build
+#!/usr/bin/env bash
 
-echo "Compiling Typst document..."
-typst compile files/cv.typ public/cv.pdf
+set -euo pipefail
 
-echo "Build complete."
+npm ci
+npm run build
