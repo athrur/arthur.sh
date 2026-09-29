@@ -1,30 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { DATASET_PHASES } from "@/content/roulette-data";
+import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 const frames = [
   {
     key: "hand",
     src: "/roulette-frame-hand.jpg",
-    position: "65% 50%",
-    label: "SPIN BOUNDARY",
-    detail: "The croupier’s hand helps locate the start and end of a spin. It is not part of the ball trajectory.",
+    label: "Dealer’s hand",
+    detail: "The dealer’s hand gives us a way to separate one spin from the next. Tracking it helps identify spin boundaries.",
   },
   {
-    key: "hidden",
+    key: "blurred",
     src: "/roulette-frame-clean.jpg",
-    position: "48% 48%",
-    label: "BALL HIDDEN",
-    detail: "The green zero is visible, but the wheel edge hides the ball. This frame has no measured ball position.",
+    label: "Motion blur",
+    detail: "The ball is visible as a blurred streak along the right-hand rim. Its speed spreads it across the frame, making its centre harder to locate precisely.",
   },
   {
     key: "tracked",
     src: "/roulette-frame-angle.jpg",
-    position: "36% 50%",
-    label: "BALL + ZERO",
-    detail: "Both reference points are visible. Their centres provide the ball and wheel angles for this frame.",
+    label: "Ball and zero",
+    detail: "Here the ball and green zero are both visible. Their labelled centres let us follow the ball’s position and the wheel’s rotation independently.",
   },
 ] as const;
 
@@ -46,89 +43,47 @@ function CausalChart() {
       <path className="dataset-chart-grid" d="M22 12V84H292M22 30H292M22 56H292" />
       <rect className="dataset-window" x="116" y="12" width="86" height="72" />
       <path className="dataset-observed-series" d={observedPath} />
-      <path className="dataset-interpolated-series" d="M122 57L142 62 162 66 182 72 202 55" />
+      <path className="dataset-interpolated-series" d={`M122 ${74 - 0.27 * 62}L142 62 162 66 182 70L202 ${74 - 0.04 * 62}`} />
       {points.map((point, index) => point.y === null
         ? <rect className="dataset-missing-point" key={index} x={point.x - 3} y={59 + (index - 6) * 4} width="6" height="6" />
         : <rect className="dataset-observed-point" key={index} x={point.x - 3} y={point.y - 3} width="6" height="6" />)}
-      <text x="22" y="106">MEASURED</text><text x="122" y="106">BALL HIDDEN</text><text x="224" y="106">ESTIMATED</text>
+      <text x="22" y="106">MEASURED</text><text x="125" y="106">ESTIMATED</text><text x="226" y="106">MEASURED</text>
     </svg>
   );
 }
 
 export function DatasetStory() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const progressRef = useRef<HTMLElement>(null);
-  const [activeStage, setActiveStage] = useState(0);
+  const reduceMotion = useReducedMotion();
   const [activeFrame, setActiveFrame] = useState(2);
 
-  useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const section = sectionRef.current;
-      if (!section) return;
-      const available = Math.max(1, section.offsetHeight - window.innerHeight);
-      const progress = Math.max(0, Math.min(1, (window.scrollY - section.offsetTop) / available));
-      const next = Math.min(DATASET_PHASES.length - 1, Math.round(progress * DATASET_PHASES.length));
-      setActiveStage((current) => current === next ? current : next);
-      if (progressRef.current) progressRef.current.style.transform = `scaleY(${progress})`;
-    };
-    const onScroll = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
-
-  const scrollToStage = (index: number) => {
-    const section = sectionRef.current;
-    if (!section) return;
-    window.scrollTo({ top: section.offsetTop + index * window.innerHeight, behavior: "smooth" });
-  };
-
-  const phase = DATASET_PHASES[activeStage];
   const frame = frames[activeFrame];
 
   return (
-    <section className="dataset-story case-checkpoint-story" id="dataset" ref={sectionRef} aria-labelledby="dataset-title">
+    <motion.section initial={false} whileInView={reduceMotion ? undefined : { opacity: [0.55, 1], y: [16, 0] }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.45 }} className="dataset-story case-checkpoint-story" id="dataset" aria-labelledby="dataset-title">
       <div className="dataset-sticky page-gutter">
         <aside className="dataset-copy">
-          <h2 id="dataset-title">Building the<br />dataset.</h2>
-          <p className="dataset-intro">The videos came without labels. Ball and wheel motion had to be recovered frame by frame.</p>
-          <ol aria-label="Dataset creation phases">
-            {DATASET_PHASES.map((item, index) => (
-              <li className={index === activeStage ? "is-active" : index < activeStage ? "is-complete" : ""} key={item.key}>
-                <button type="button" onClick={() => scrollToStage(index)} aria-current={index === activeStage ? "step" : undefined}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>{item.label}<i />
-                </button>
-              </li>
-            ))}
-          </ol>
-          <div className="dataset-phase-copy" aria-live="polite"><p>{phase.title}</p><span>{phase.body}</span></div>
+          <h2 id="dataset-title">First, I needed<br />the data.</h2>
+          <p className="dataset-intro">The videos showed the spins, but none of the measurements I needed. Before I could train a forecasting model, I had to turn the footage into reliable records of where the ball and wheel were in each frame.</p>
+          <p className="dataset-intro">I collected 40 hours of footage across 42 videos, prepared the frames, and built a set of 500 checked examples to train the detector. After tracking and quality filtering, 2,765 spins were ready for modelling.</p>
           <dl className="dataset-metrics">
             <div><dt>42</dt><dd>videos</dd></div>
-            <div><dt>30h 21m</dt><dd>footage</dd></div>
-            <div><dt>5.46M</dt><dd>frames</dd></div>
+            <div><dt>40 hours</dt><dd>footage</dd></div>
+            <div><dt>2,765</dt><dd>usable spins</dd></div>
           </dl>
         </aside>
 
-        <div className={`dataset-explorer dataset-stage-${activeStage}`}>
-          <header><span>DATASET EXPLORER / {String(activeStage + 1).padStart(2, "0")}</span><strong>{phase.label}</strong></header>
+        <div className="dataset-explorer">
+
           <div className="dataset-instruction">
-            <p>TRACKING EXAMPLES</p>
-            <small>Select an image to see what the detector recorded.</small>
+            <p>What the camera sees</p>
+            <small>Choose a frame to inspect its labels.</small>
           </div>
+          <motion.figure key={frame.key} className="dataset-selected-frame" initial={reduceMotion ? false : { opacity: 0.5, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}><div><Image src={frame.src} alt={frame.detail} fill sizes="(max-width: 820px) 90vw, 45vw" /></div><figcaption>{frame.detail}</figcaption></motion.figure>
           <div className="dataset-filmstrip">
             {frames.map((item, index) => (
               <button className={index === activeFrame ? "is-active" : ""} type="button" onClick={() => setActiveFrame(index)} key={item.key} aria-pressed={index === activeFrame} aria-label={`View ${item.label.toLowerCase()} example`}>
                 <span>EXAMPLE {String(index + 1).padStart(2, "0")}</span>
-                <i><Image src={item.src} alt="" fill sizes="18vw" style={{ objectPosition: item.position }} /></i>
+                <i><Image src={item.src} alt="" fill sizes="(max-width: 820px) 28vw, 15vw" /></i>
                 <b>{item.label}</b>
               </button>
             ))}
@@ -136,25 +91,22 @@ export function DatasetStory() {
         </div>
 
         <aside className="dataset-inspector">
-          <header>SELECTED EXAMPLE</header>
+          <header>READING THE FRAME</header>
           <div className={`dataset-status status-${frame.key}`} aria-live="polite">
             <i /><div><strong>{frame.label}</strong><span>{frame.detail}</span></div>
           </div>
+          <p className="diagram-caption">When a detection is missing</p>
           <CausalChart />
           <dl>
-            <div><dt>MANUAL LABELS</dt><dd>100</dd></div>
-            <div><dt>VERIFIED</dt><dd>500</dd></div>
-            <div><dt>AUGMENTED</dt><dd>3×</dd></div>
-            <div><dt>CAUSAL WINDOW</dt><dd>12 frames</dd></div>
+            <div><dt>HAND-LABELLED</dt><dd>100</dd></div>
+            <div><dt>CHECKED FRAMES</dt><dd>500</dd></div>
+            <div><dt>DATA AUGMENTATION</dt><dd>3×</dd></div>
+            <div><dt>PREVIOUS POSITIONS</dt><dd>12 frames</dd></div>
           </dl>
-          <p>Short missing sections are estimated from earlier positions only. Later frames are not used.</p>
+          <p>The diagram illustrates a brief occlusion. Missing positions are estimated from the preceding 12 frames, so the estimate never relies on seeing what happens next.</p>
         </aside>
 
-        <div className="case-progress-rail" aria-hidden="true"><span>{Math.round((activeStage / (DATASET_PHASES.length - 1)) * 100)}%</span><i><b ref={progressRef} /></i><span>SCROLL</span></div>
       </div>
-      <div className="case-scroll-checkpoints" aria-hidden="true">
-        {DATASET_PHASES.map((phase) => <i key={phase.key} />)}
-      </div>
-    </section>
+    </motion.section>
   );
 }

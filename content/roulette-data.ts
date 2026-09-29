@@ -35,27 +35,27 @@ export const COMPARISON_RESULTS: Record<Comparison, { label: string; ballMae: nu
 export const PIPELINE_STAGES = [
   {
     key: "input",
-    label: "INPUT",
-    title: "Source footage",
-    body: "The dataset contains 42 public videos and 5,463,775 frames, recorded across different wheels, lighting conditions, and camera angles.",
+    label: "Video",
+    title: "Starting with the camera’s view",
+    body: "I started with 42 videos: over 5.46 million frames across different wheels, lighting conditions, and camera angles.",
   },
   {
     key: "detect",
-    label: "DETECT",
-    title: "Object detection",
-    body: "YOLOv11 segmentation identifies the ball, green zero, and croupier’s hand. Mean ball-centre error was 1.36 px.",
+    label: "Detect",
+    title: "Locating the ball and wheel",
+    body: "I trained a YOLOv11 segmentation model to find the ball, green zero, and dealer’s hand. It located the ball’s centre with a mean error of 1.36 pixels.",
   },
   {
     key: "normalise",
-    label: "NORMALISE",
-    title: "Geometric normalisation",
-    body: "An ellipse fit and homography map each camera view to a unit circle before smoothing and interpolation.",
+    label: "Correct",
+    title: "Removing the camera angle",
+    body: "I fitted an ellipse to the track, then transformed the angled camera view into a top-down circle. That gave every spin a shared coordinate system.",
   },
   {
     key: "trajectory",
-    label: "TRAJECTORY",
-    title: "Feature extraction",
-    body: "The cleaned tracks become angles, radii, velocities, and a drop-off label for each spin.",
+    label: "Measure",
+    title: "Turning positions into motion",
+    body: "From those tracks, I calculated position and speed, then identified when the ball left the rim. Those measurements became the models’ training data.",
   },
 ] as const;
 
@@ -63,73 +63,34 @@ export const RESEARCH_CHAPTERS = [
   { number: "01", label: "VIDEO", detail: "42 source videos", href: "#dataset" },
   { number: "02", label: "LABELS", detail: "segmentation data", href: "#dataset" },
   { number: "03", label: "TRACK", detail: "ball and wheel", href: "#vision" },
-  { number: "04", label: "NORMALISE", detail: "camera geometry", href: "#vision" },
+  { number: "04", label: "Correct", detail: "camera geometry", href: "#vision" },
   { number: "05", label: "PREDICT", detail: "three LSTM tasks", href: "#training" },
   { number: "06", label: "TEST", detail: "held-out results", href: "#results" },
-] as const;
-
-export const DATASET_PHASES = [
-  {
-    key: "acquire",
-    label: "ACQUIRE",
-    title: "Video collection",
-    body: "With permission, 42 YouTube videos supplied 30 hours, 21 minutes, and 15 seconds of footage at 50 FPS.",
-  },
-  {
-    key: "prepare",
-    label: "PREPARE",
-    title: "Frame preparation",
-    body: "Videos were downloaded at 720p, stripped of overlays, cropped to the wheel, and resized to 640×640.",
-  },
-  {
-    key: "annotate",
-    label: "ANNOTATE",
-    title: "Segmentation labels",
-    body: "The ball, green zero, and croupier’s hand were labelled in 500 verified frames, then expanded with 3× augmentation.",
-  },
-  {
-    key: "repair",
-    label: "REPAIR",
-    title: "Repair missing frames",
-    body: "When the ball briefly disappeared behind the rim or a hand, its position was estimated from the previous 12 frames and then smoothed.",
-  },
-  {
-    key: "split",
-    label: "SPLIT",
-    title: "Spin segmentation",
-    body: "A rolling hand signal identified spins. Segments outside 15–45 seconds were removed before trajectory extraction.",
-  },
-  {
-    key: "curate",
-    label: "CURATE",
-    title: "Quality filtering",
-    body: "2,765 spins remained after filtering missing drop events, implausible radii, and discontinuities in angular position.",
-  },
 ] as const;
 
 export const TRAINING_PHASES = [
   {
     key: "split",
-    label: "SPLIT",
-    title: "Dataset split",
-    body: "The 2,765 valid spins were split 75% / 12.5% / 12.5% for training, validation, and held-out testing.",
+    label: "Split",
+    title: "Keeping the final test separate",
+    body: "I used 75% of the spins for training, 12.5% to tune the models, and reserved the final 12.5% for testing.",
   },
   {
     key: "architect",
-    label: "ARCHITECT",
-    title: "Three prediction tasks",
-    body: "One LSTM estimates drop-off time. Two encoder–decoders estimate the ball and wheel angular trajectories.",
+    label: "Design",
+    title: "A separate model for each question",
+    body: "One LSTM predicts a single drop time. Two encoder–decoder networks predict sequences of future angles, one for the ball and one for the wheel.",
   },
   {
     key: "optimise",
-    label: "OPTIMISE",
-    title: "Training procedure",
-    body: "Adam, circular loss, learning-rate scheduling, and ten-epoch early stopping were used for the variable-length sequences.",
+    label: "Train",
+    title: "Training without overfitting the examples",
+    body: "I trained with Adam and a loss suited to circular motion, reducing the learning rate as progress slowed and stopping after ten epochs without improvement.",
   },
   {
     key: "challenge",
-    label: "ABLATE",
-    title: "Ablation tests",
-    body: "Feature removal, Gaussian noise, and reduced datasets were tested across five observation windows.",
+    label: "Test",
+    title: "Checking what the models depended on",
+    body: "I removed features, added noise, and reduced the training set to test how robust the models were. I also varied the observation window from two to ten seconds to measure how much early footage helped.",
   },
 ] as const;

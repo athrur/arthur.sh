@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
 type SpinPhase = "ready" | "dragging" | "running" | "coasting" | "complete";
-type Sample = Point & { missing: boolean; index: number };
+type Sample = Point & { missing: boolean; index: number; elapsed: number; slope: number };
 type Impact = Point & { id: number; kind: "wall" | "centre" | "deflector" | "nudge" };
 type PocketColor = "red" | "black" | "green";
 type SpinOutcome = { index: number; number: number; color: PocketColor };
@@ -21,7 +21,7 @@ const INNER_WHEEL_RADIUS = 174;
 const MAX_RUN_TIME = 12;
 const TAP_SPEED = 260;
 const POCKET_RADIUS = 153;
-const SPIN_VIEWBOX = { x: 110, y: 60, width: 500, height: 450 } as const;
+const SPIN_VIEWBOX = { x: 70, y: 0, width: 580, height: 570 } as const;
 const WHEEL_SECTOR = (Math.PI * 2) / 37;
 const EUROPEAN_WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26] as const;
 const RED_NUMBERS = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -88,6 +88,8 @@ const deflectors = Array.from({ length: 8 }, (_, index) => pointAt((index / 8) *
 export function SpinLab() {
   const reduceMotion = useReducedMotion();
   const stageRef = useRef<HTMLDivElement>(null);
+  const dragPointerRef = useRef<number | null>(null);
+  const pullRef = useRef<Point>({ x: 0, y: 0 });
   const ballRef = useRef<SVGCircleElement>(null);
   const ballHitRef = useRef<SVGCircleElement>(null);
   const trailRef = useRef<SVGPathElement>(null);
@@ -119,7 +121,6 @@ export function SpinLab() {
   const missingCountRef = useRef(0);
   const [phase, setPhase] = useState<SpinPhase>("ready");
   const [pull, setPull] = useState<Point>({ x: 0, y: 0 });
-  const [horizon, setHorizon] = useState(6);
   const [samples, setSamples] = useState<Sample[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [dropDetected, setDropDetected] = useState(false);
@@ -150,6 +151,7 @@ export function SpinLab() {
     ballHitRef.current?.setAttribute("cy", String(point.y));
     trailRef.current?.setAttribute("d", `M${point.x} ${point.y}`);
     rotorRef.current?.setAttribute("transform", `rotate(0 ${CENTRE.x} ${CENTRE.y})`);
+    pullRef.current = { x: 0, y: 0 };
     setPull({ x: 0, y: 0 });
     setSamples([]);
     missingCountRef.current = 0;
@@ -178,7 +180,7 @@ export function SpinLab() {
     ballHitRef.current?.setAttribute("cy", String(initial.y));
     trailRef.current?.setAttribute("d", `M${initial.x} ${initial.y}`);
     rotorRef.current?.setAttribute("transform", `rotate(0 ${CENTRE.x} ${CENTRE.y})`);
-    setSamples([{ ...initial, missing: false, index: 0 }]);
+    setSamples([{ ...initial, missing: false, index: 0, elapsed: 0, slope: 0 }]);
     missingCountRef.current = 0;
     setDropDetected(false);
     setImpact(null);
@@ -309,7 +311,7 @@ export function SpinLab() {
         radialHistory.push(physics.radius / TRACK_RADIUS);
         if (radialHistory.length > 20) radialHistory.shift();
         physics.radialSlope = radialHistory.length >= 8 ? (radialHistory.at(-1)! - radialHistory[0]) / radialHistory.length : 0;
-        setSamples((current) => [...current.slice(-94), { ...position, missing, index: physics.sampleIndex }]);
+        setSamples((current) => [...current.slice(-94), { ...position, missing, index: physics.sampleIndex, elapsed: physics.elapsed, slope: physics.radialSlope }]);
         if (physics.radialSlope < -0.006) setDropDetected(true);
       }
 
@@ -415,7 +417,11 @@ export function SpinLab() {
   };
 
   const completeDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (phase !== "dragging") return;
+    if (dragPointerRef.current !== event.pointerId) return;
+    dragPointerRef.current = null;
+    const pull = pullRef.current;
+    const pullMagnitude = Math.hypot(pull.x, pull.y);
+    const predictedSpeed = TAP_SPEED + pullMagnitude * 6.1;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     if (pullMagnitude < 12) {
       setPull({ x: 0, y: 0 });
@@ -436,28 +442,30 @@ export function SpinLab() {
   return (
     <section className="spin-lab page-gutter case-snap-section" id="launch" aria-labelledby="spin-lab-title">
       <aside className="spin-instructions">
-        <h2 id="spin-lab-title">Following<br />a spin.</h2>
-        <p>Drag the ball to set it moving. The display follows the positions, missing frames, and radial change recorded by the pipeline.</p>
+        <h2 id="spin-lab-title">What a spin<br />looks like as data.</h2>
+        <p>Try launching the ball. Each square marks a sampled position; gaps appear when it passes through the shaded area. As the ball moves inward, the change in radius gives us a way to detect its drop from the rim.</p>
         <div className="spin-actions">
+          <button type="button" className="spin-launch-button" onClick={() => launch(-Math.sin(START_ANGLE) * TAP_SPEED, Math.cos(START_ANGLE) * TAP_SPEED, 4.8, "LAUNCH")}>LAUNCH <span aria-hidden="true">↗</span></button>
           <button type="button" onClick={resetSpin}>RESET <span aria-hidden="true">↺</span></button>
           <button type="button" onClick={() => launch(lastLaunchRef.current.vx, lastLaunchRef.current.vy, lastLaunchRef.current.dropAt, "REPLAY")}>REPLAY <span aria-hidden="true">▷</span></button>
         </div>
-        <p className="simulation-note">A browser physics sketch, separate from the trained models.</p>
+        <p className="simulation-note">Pull back the ball and release, or press Launch. This simulation demonstrates the tracking ideas; it does not run the trained models.</p>
       </aside>
 
       <div className="spin-centre">
         <div className="spin-launch-readout" aria-live="polite">
           <div><span>PULL DISTANCE</span><b>{pullMagnitude.toFixed(1)}</b><small>px</small></div>
-          <div><span>VECTOR SPEED</span><b>{phase === "ready" || phase === "dragging" ? predictedSpeed.toFixed(0) : launchSpeed.toFixed(0)}</b><small>px/s</small></div>
-          <div><span>STATE</span><b>{phase.toUpperCase()} · {lastAction}</b></div>
+          <div><span>LAUNCH SPEED</span><b>{phase === "ready" || phase === "dragging" ? predictedSpeed.toFixed(0) : launchSpeed.toFixed(0)}</b><small>px/s</small></div>
+          <div><span>SPIN STATUS</span><b>{phase.toUpperCase()} · {lastAction}</b></div>
         </div>
         <div
           className={`spin-stage is-${phase}`}
           ref={stageRef}
-          role="application"
+          role="group"
           tabIndex={0}
-          aria-label="Free-vector roulette simulation. Drag the ball in any direction and release. Tap anywhere during motion to knock it toward that point. Press Space for a default tap."
+          aria-label="Roulette simulation. Pull back the ball and release to launch. Tap during motion to nudge. Space launches; Escape resets."
           onPointerDown={(event) => {
+            if (!event.isPrimary || event.button !== 0 || dragPointerRef.current !== null) return;
             const point = pointerPosition(event);
             if (phase === "complete") {
               resetSpin();
@@ -470,17 +478,29 @@ export function SpinLab() {
             if (phase === "coasting") return;
             const target = phase === "dragging" ? pulledBall : start;
             if (Math.hypot(point.x - target.x, point.y - target.y) > 54) return;
+            event.preventDefault();
+            dragPointerRef.current = event.pointerId;
             event.currentTarget.setPointerCapture(event.pointerId);
             resetSpin();
             setPhase("dragging");
           }}
           onPointerMove={(event) => {
-            if (phase !== "dragging") return;
+            if (dragPointerRef.current !== event.pointerId) return;
             const point = pointerPosition(event);
-            setPull(clampVector({ x: point.x - start.x, y: point.y - start.y }));
+            pullRef.current = clampVector({ x: point.x - start.x, y: point.y - start.y });
+            setPull(pullRef.current);
           }}
           onPointerUp={completeDrag}
-          onPointerCancel={completeDrag}
+          onPointerCancel={() => {
+            if (dragPointerRef.current === null) return;
+            dragPointerRef.current = null;
+            resetSpin();
+          }}
+          onLostPointerCapture={() => {
+            if (dragPointerRef.current === null) return;
+            dragPointerRef.current = null;
+            resetSpin();
+          }}
           onKeyDown={(event) => {
             if ((event.key === " " || event.key === "Enter") && phase !== "coasting") {
               event.preventDefault();
@@ -530,7 +550,7 @@ export function SpinLab() {
             <path className="spin-cross" d="M342 286h36M360 268v36" />
             <path className="spin-orbit-preview" d="M166 350A204 204 0 1 1 168 354" />
             <path className="spin-trail" ref={trailRef} d={`M${start.x} ${start.y}`} />
-            <path className="spin-interpolation" d={samples.filter((sample) => sample.missing).map((sample, index) => `${index === 0 ? "M" : "L"}${sample.x} ${sample.y}`).join(" ")} />
+            <path className="spin-interpolation" d={samples.map((sample, index) => sample.missing ? `${index === 0 || !samples[index - 1].missing ? "M" : "L"}${sample.x} ${sample.y}` : "").join(" ")} />
             <g className="spin-samples">
               {samples.map((sample) => sample.missing
                 ? <circle className="is-missing" key={sample.index} cx={sample.x} cy={sample.y} r="4" />
@@ -544,52 +564,58 @@ export function SpinLab() {
               <path className="spin-launch-vector" markerEnd="url(#spin-vector-arrow)" d={`M${pulledBall.x} ${pulledBall.y}L${pulledBall.x - pull.x * 0.75} ${pulledBall.y - pull.y * 0.75}`} />
             </> : null}
             <circle className="spin-ball" ref={ballRef} cx={pulledBall.x} cy={pulledBall.y} r="9" filter="url(#spin-ball-glow)" />
-            <circle className="spin-ball-hit" ref={ballHitRef} cx={pulledBall.x} cy={pulledBall.y} r="28" />
-            <text className="spin-grab-label" x={Math.max(22, pulledBall.x - 76)} y={pulledBall.y + 50}>{phase === "dragging" ? "RELEASE ANYWHERE" : phase === "ready" ? "GRAB · TAP · FLING" : ""}</text>
+            <circle style={{ touchAction: "none" }} className="spin-ball-hit" ref={ballHitRef} cx={pulledBall.x} cy={pulledBall.y} r="28" />
+            <text className="spin-grab-label" x={Math.max(92, pulledBall.x - 30)} y={pulledBall.y + 50}>{phase === "dragging" ? "RELEASE ANYWHERE" : phase === "ready" ? "PULL & RELEASE" : ""}</text>
           </svg>
+          {phase === "ready" || phase === "dragging" ? <button
+            type="button"
+            className="spin-drag-handle"
+            aria-label="Pull ball and release to launch"
+            style={{ left: `${(pulledBall.x - SPIN_VIEWBOX.x) / SPIN_VIEWBOX.width * 100}%`, top: `${(pulledBall.y - SPIN_VIEWBOX.y) / SPIN_VIEWBOX.height * 100}%` }}
+          /> : null}
         </div>
 
         <div className="spin-slope">
-          <header><span>RADIAL SLOPE (Δr / frame)</span><b className={dropDetected ? "is-detected" : ""}>{dropDetected ? "DROP-OFF DETECTED" : "MONITORING"}</b></header>
+          <header><span>CHANGE IN DISTANCE FROM THE CENTRE</span><b className={dropDetected ? "is-detected" : ""}>{dropDetected ? "INWARD DROP DETECTED" : "WAITING FOR THE DROP"}</b></header>
           <svg viewBox="0 0 760 116" role="img" aria-label={`Current radial slope ${telemetry.slope.toFixed(4)}, threshold negative 0.006`}>
             <path className="slope-grid" d="M28 18H740M28 50H740M28 82H740" />
             <path className="slope-threshold" d="M28 70H740" />
-            <path className="slope-series" d={`M28 42C126 34 208 51 296 45S436 48 510 52 ${Math.min(740, 510 + telemetry.elapsed * 28)} ${50 + Math.max(0, -telemetry.slope * 3100)}`} />
-            <text x="2" y="22">+.006</text><text x="11" y="54">0</text><text x="0" y="74">−.006</text><text x="28" y="106">0s</text><text x="374" y="106">5s</text><text x="714" y="106">10s</text>
+            <path className="slope-series" d={samples.map((sample, index) => `${index === 0 ? "M" : "L"}${28 + Math.min(1, sample.elapsed / 16) * 712} ${Math.max(18, Math.min(82, 50 - sample.slope * (20 / 0.006)))}`).join(" ")} />
+            <text x="2" y="22">+.006</text><text x="11" y="54">0</text><text x="0" y="74">−.006</text><text x="28" y="106">0s</text><text x="374" y="106">8s</text><text x="714" y="106">16s</text>
           </svg>
         </div>
 
         <div className="spin-timeline">
           <button type="button" onClick={() => phase === "running" || phase === "coasting" ? resetSpin() : launch(lastLaunchRef.current.vx, lastLaunchRef.current.vy, lastLaunchRef.current.dropAt, "REPLAY")} aria-label={phase === "running" || phase === "coasting" ? "Stop simulation" : "Play simulation"}>{phase === "running" || phase === "coasting" ? "■" : "▷"}</button>
-          <div><i style={{ width: `${Math.min(100, telemetry.elapsed * 10)}%` }} /><b style={{ left: `${Math.min(100, telemetry.elapsed * 10)}%` }} /></div>
-          <fieldset><legend>OBSERVATION HORIZON</legend>{[2, 4, 6, 8, 10].map((value) => <button key={value} type="button" aria-pressed={horizon === value} onClick={() => setHorizon(value)}>{value}s</button>)}</fieldset>
+          <div><i style={{ width: `${Math.min(100, telemetry.elapsed / 16 * 100)}%` }} /><b style={{ left: `${Math.min(100, telemetry.elapsed / 16 * 100)}%` }} /></div>
+          <output className="spin-elapsed">{telemetry.elapsed.toFixed(1)} s</output>
         </div>
       </div>
 
       <aside className={`spin-telemetry${outcome ? " has-result" : ""}`}>
-        <header>TELEMETRY (LIVE)</header>
+        <header>SIMULATED MOTION</header>
         <dl>
-          <div><dt>TRACK STATE</dt><dd>{telemetry.trackState}</dd></div>
+          <div><dt>TRACK SPIN STATUS</dt><dd>{telemetry.trackState}</dd></div>
           <div><dt>BALL θ</dt><dd>{(telemetry.angle * 180 / Math.PI).toFixed(2)}°</dd></div>
           <div><dt>ROTOR θ</dt><dd>{(telemetry.wheelAngle * 180 / Math.PI).toFixed(2)}°</dd></div>
           <div><dt>BALL ω</dt><dd>{telemetry.omega.toFixed(2)} rad/s</dd></div>
           <div><dt>ROTOR ω</dt><dd>{telemetry.wheelOmega.toFixed(2)} rad/s</dd></div>
           <div><dt>SPEED |v|</dt><dd>{telemetry.speed.toFixed(0)} px/s</dd></div>
-          <div><dt>OBSERVED FRAMES</dt><dd>{samples.length - telemetry.missing}</dd></div>
-          <div><dt>MISSING FRAMES</dt><dd>{telemetry.missing}</dd></div>
+          <div><dt>VISIBLE SAMPLES</dt><dd>{(samples.at(-1)?.index ?? 0) - telemetry.missing}</dd></div>
+          <div><dt>HIDDEN SAMPLES</dt><dd>{telemetry.missing}</dd></div>
         </dl>
         <div className="spin-pipeline">
-          <p>PIPELINE (LIVE)</p>
+          <p>TRACKING STEPS</p>
           {pipelineLabels.map((label, index) => <div className={index < currentPipelineStep ? "is-complete" : index === currentPipelineStep ? "is-active" : ""} key={label}><i /><span>{label}</span><small>{index < currentPipelineStep ? "complete" : index === currentPipelineStep ? "processing…" : "waiting"}</small><b>{index < currentPipelineStep ? "✓" : ""}</b></div>)}
         </div>
         {outcome ? <div className={`spin-result is-${outcome.color}`} aria-live="assertive">
-          <span>RESULT</span>
+          <span>SIMULATED RESULT</span>
           <strong>{outcome.number}</strong>
           <b>{outcome.color.toUpperCase()}</b>
-          <p>RELATIVE PHASE LOCKED</p>
-          <button type="button" onClick={resetSpin}><i aria-hidden="true">↻</i> SPIN AGAIN <span aria-hidden="true">→</span></button>
+          <p>BALL SETTLED IN POCKET</p>
+          <button type="button" onClick={resetSpin}><i aria-hidden="true">↻</i> TRY ANOTHER SPIN <span aria-hidden="true">→</span></button>
         </div> : null}
-        <p className="spin-keyboard-help">Tap to nudge the ball. Space launches. Escape resets.</p>
+        <p className="spin-keyboard-help">Tap the wheel during a spin to nudge the ball. On a keyboard, Space launches and Escape resets.</p>
       </aside>
     </section>
   );

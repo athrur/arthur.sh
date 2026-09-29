@@ -4844,3 +4844,297 @@ html.roulette-scroll-mode {
   .training-split dl { grid-template-columns: minmax(0, 5fr) minmax(5.4rem, 1fr) minmax(5.4rem, 1fr); }
   .training-split dd { font-size: clamp(1rem, 2vw, 1.9rem); }
 }
+
+/* Roulette case study: readable chapters with direct, consistent controls. */
+html.roulette-scroll-mode { scroll-snap-type: none; }
+.roulette-case { --case-body: clamp(0.9rem, 1.05vw, 1.05rem); }
+.roulette-case :is(button, a, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+.roulette-case :is(h1, h2, h3) { text-wrap: balance; }
+.roulette-case :is(.dataset-sticky, .training-sticky, .pipeline-sticky) {
+  position: relative;
+  height: auto;
+  min-height: 0;
+  padding-block: clamp(3.5rem, 6vw, 6rem);
+  overflow: visible;
+  gap: 2rem;
+  grid-template-columns: minmax(15rem, 0.8fr) minmax(0, 1.7fr);
+}
+.roulette-case :is(.dataset-copy, .training-copy, .pipeline-copy) { min-width: 0; }
+.roulette-case :is(.dataset-copy h2, .training-copy h2, .pipeline-copy h2, .spin-instructions h2) { font-size: clamp(2.5rem, 3.8vw, 4rem); line-height: 1.04; }
+.roulette-case :is(.roulette-hero-copy > div, .dataset-intro, .training-copy > p, .pipeline-lede, .spin-instructions > p:not(.simulation-note), .results-heading p) {
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--case-body);
+  line-height: 1.65;
+  color: #c8cbce;
+}
+.roulette-hero-copy > div { max-width: 34rem; }
+.roulette-hero-instrument > p { font-size: 0.7rem; }
+.hero-scroll-cue { font-size: 0.65rem; }
+.roulette-case :is(.dataset-phase-copy, .training-phase-copy, .pipeline-stage-copy) { min-height: 9rem; margin-top: 1.5rem; }
+.roulette-case :is(.dataset-phase-copy span, .training-phase-copy span, .pipeline-stage-copy span) { font-family: var(--font-sans), sans-serif; font-size: var(--case-body); line-height: 1.6; }
+.roulette-case :is(.dataset-copy li button, .training-copy li button, .pipeline-steps button) { min-height: 44px; font-size: 0.7rem; }
+.roulette-case :is(.dataset-inspector, .training-inspector) { grid-column: 2; border: 0; border-top: 1px solid var(--rule); padding-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
+.roulette-case :is(.dataset-inspector, .training-inspector) > header { grid-column: 1 / -1; }
+.dataset-inspector .dataset-status { grid-row: span 2; }
+.dataset-inspector .dataset-causal-chart { margin: 0; }
+.dataset-inspector > dl { grid-row: span 2; }
+.roulette-case :is(.dataset-inspector, .training-inspector) :is(p, dt, dd, .dataset-status span) { font-size: 0.8rem; line-height: 1.6; }
+.dataset-metrics { margin-top: 1.5rem; }
+.dataset-explorer { height: auto; min-height: 0; margin: 0; padding: 0; border: 0; display: block; overflow: visible; }
+.dataset-instruction { align-items: start; }
+.dataset-instruction p { font-size: clamp(1rem, 1.7vw, 1.5rem); }
+.dataset-instruction small { font-size: 0.7rem; max-width: 14rem; }
+.dataset-selected-frame { margin: 0 0 1.5rem; }
+.dataset-selected-frame > div { position: relative; aspect-ratio: 16 / 10; background: var(--surface); border: 1px solid var(--rule); }
+.dataset-selected-frame img { object-fit: contain; }
+.dataset-selected-frame figcaption { min-height: 3.5rem; margin-top: 0.75rem; color: var(--muted); font-size: 0.85rem; line-height: 1.55; }
+.dataset-filmstrip { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 0.75rem; overflow: visible; }
+.dataset-filmstrip button { grid-template-rows: auto auto auto; font-size: 0.65rem; }
+.dataset-filmstrip button > i { aspect-ratio: 16 / 10; }
+.dataset-filmstrip img, .dataset-filmstrip button.is-active img { object-fit: contain; transform: none; filter: none; }
+.dataset-filmstrip button > b { min-height: 2.5rem; align-items: start; padding-top: 0.5rem; }
+.diagram-caption { color: var(--muted); font: 0.75rem/1.5 var(--font-sans), sans-serif; }
+.roulette-case .pipeline-visual { min-width: 0; margin: 0; padding: 3rem 1rem 1rem; }
+.roulette-case .pipeline-visual-grid { height: auto; grid-template-columns: 1fr; }
+.roulette-case .pipeline-frame { height: auto; aspect-ratio: 16 / 9; max-height: 20rem; border: 0; }
+.roulette-case .pipeline-frame img { object-fit: contain; transform: none; filter: none; opacity: 1; }
+.roulette-case .pipeline-frame::after, .roulette-case .scan-line { display: none; }
+.pipeline-frame > p { background: var(--background); padding: 0.4rem; font-size: 0.65rem; }
+.geometry-transform { width: 100%; height: auto; }
+.roulette-case .pipeline-charts { width: 100%; height: auto; }
+.roulette-case .training-canvas { min-height: 34rem; height: auto; margin: 0; }
+.training-models { grid-template-columns: 1fr 1.2fr; gap: 1rem; }
+.training-models > i, .training-input { display: none; }
+.training-active-model { display: block; }
+.training-task-stack button { min-height: 64px; }
+.training-task-stack button span { font-size: 0.7rem; }
+.training-task-stack button small, .training-active-model small { font-size: 0.65rem; }
+.training-split > div { grid-template-columns: 6fr 1fr 1fr; }
+.training-split dl { grid-template-columns: repeat(3, 1fr); }
+.training-run { grid-template-columns: 1fr; align-content: center; }
+.training-run dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.training-run dt { font-size: 0.6rem; }
+.training-search { grid-template-columns: repeat(2, 1fr); }
+.roulette-case .spin-lab { height: auto; min-height: 0; grid-template-columns: minmax(15rem, 0.8fr) minmax(0, 1.7fr); padding-block: clamp(3.5rem, 6vw, 6rem); overflow: visible; }
+.spin-centre { min-height: 0; margin: 0; grid-template-rows: auto auto auto auto; }
+.spin-stage { aspect-ratio: 580 / 570; width: 100%; min-height: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.spin-stage.is-dragging { touch-action: pan-y; }
+.spin-ball-hit { touch-action: none; pointer-events: all; }
+.spin-actions { flex-wrap: wrap; gap: 0.75rem; }
+.spin-actions button { min-height: 44px; padding: 0.65rem; font-size: 0.75rem; }
+.spin-actions .spin-launch-button { color: var(--background); background: var(--accent); border-color: var(--accent); }
+.spin-actions .spin-launch-button:hover { color: var(--background); opacity: 0.85; }
+.spin-telemetry { grid-column: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; border: 0; }
+.spin-telemetry > header, .spin-keyboard-help { grid-column: 1 / -1; }
+.spin-telemetry :is(dt, dd), .spin-pipeline > div, .spin-pipeline > p { font-size: 0.7rem; }
+.spin-telemetry .spin-pipeline { margin: 0; }
+.spin-result { grid-column: 1 / -1; }
+.spin-launch-readout span { font-size: 0.6rem; }
+.spin-launch-readout b { font-size: 0.75rem; }
+.spin-timeline { grid-template-columns: 44px 1fr auto; }
+.spin-timeline > button, .spin-timeline fieldset button { min-width: 44px; min-height: 44px; font-size: 0.75rem; }
+.simulation-note { font-size: 0.8rem; line-height: 1.6; }
+.roulette-case .horizon-scrubber input { min-height: 44px; }
+.roulette-case .baseline-comparison button, .roulette-case .failure-mode button { min-height: 44px; }
+
+@media (max-width: 1050px) {
+  .roulette-hero { grid-template-columns: 1fr 1fr; }
+  .roulette-hero h1 { font-size: clamp(3rem, 5.7vw, 4.8rem); }
+  .roulette-case :is(.dataset-sticky, .training-sticky, .pipeline-sticky, .spin-lab) { grid-template-columns: minmax(13rem, 0.8fr) minmax(0, 1.4fr); gap: 1.5rem; }
+  .training-split { padding-inline: 1rem; }
+  .spin-launch-readout { grid-template-columns: 1fr 1fr; }
+  .spin-launch-readout > div:last-child { grid-column: 1 / -1; }
+  .spin-timeline { grid-template-columns: 44px 1fr; }
+  .spin-timeline fieldset { grid-column: 1 / -1; justify-content: space-between; }
+}
+@media (max-width: 820px) {
+  .roulette-header { height: auto; min-height: 3.5rem; grid-template-columns: 1fr auto; padding-top: 0.5rem; }
+  .roulette-header nav { grid-row: 2; grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .roulette-header nav a { min-height: 40px; display: flex; align-items: center; font-size: 0.65rem; }
+  .roulette-back { grid-column: 2; grid-row: 1; }
+  .roulette-case section { scroll-margin-top: 6rem; }
+  .roulette-hero { grid-template-columns: 1fr; padding-top: 8rem; padding-bottom: 3rem; }
+  .roulette-hero h1 { font-size: clamp(2.8rem, 11vw, 4.5rem); }
+  .roulette-hero-instrument { margin-top: 1rem; }
+  .roulette-chapter-rail { position: relative; left: auto; right: auto; bottom: auto; grid-template-columns: repeat(3, 1fr); gap: 1rem; overflow: visible; margin-top: 1.5rem; }
+  .roulette-chapter-rail::before, .roulette-chapter-rail i { display: none; }
+  .roulette-chapter-rail a { min-height: 44px; padding: 0.5rem 0; border-top: 1px solid var(--rule); }
+  .hero-scroll-cue { position: static; margin-top: 1.5rem; font-size: 0.65rem; line-height: 1.6; }
+  .roulette-case :is(.dataset-sticky, .training-sticky, .pipeline-sticky, .spin-lab) { grid-template-columns: minmax(0, 1fr); padding-block: 3.5rem; gap: 1.5rem; }
+  .roulette-case :is(.dataset-inspector, .training-inspector, .spin-telemetry) { grid-column: 1; }
+  .roulette-case :is(.dataset-copy h2, .training-copy h2, .pipeline-copy h2, .spin-instructions h2) { font-size: clamp(2.6rem, 10vw, 3.8rem); }
+  .roulette-case :is(.dataset-copy ol, .training-copy ol, .pipeline-steps) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .roulette-case :is(.dataset-copy li button, .training-copy li button, .pipeline-steps button) { flex-direction: row; align-items: center; gap: 0.75rem; padding: 0.6rem; font-size: 0.7rem; }
+  .roulette-case :is(.dataset-phase-copy, .training-phase-copy, .pipeline-stage-copy) { min-height: 8.5rem; }
+  .dataset-explorer { min-height: 0; }
+  .dataset-filmstrip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dataset-filmstrip button { font-size: 0.6rem; }
+  .dataset-instruction small { text-align: left; max-width: none; }
+  .dataset-inspector .dataset-status { grid-column: 1 / -1; grid-row: auto; }
+  .roulette-case .training-canvas { min-height: 32rem; }
+  .training-models { grid-template-columns: 1fr; align-content: center; }
+  .training-task-stack { grid-template-columns: 1fr; }
+  .training-active-model { display: block; padding: 0.75rem; }
+  .training-active-model > div { display: inline-block; width: 46%; margin: 0.5rem 2% 0 0; padding: 0.5rem; }
+  .training-active-model > i { display: none; }
+  .training-split > div { height: 9rem; }
+  .training-split dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .training-search { padding: 0.5rem; }
+  .spin-centre { min-height: 0; }
+  .spin-launch-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .spin-slope svg { height: auto; }
+}
+@media (max-width: 420px) {
+  .roulette-case :is(.dataset-inspector, .training-inspector, .spin-telemetry) { grid-template-columns: minmax(0, 1fr); }
+  .dataset-inspector > dl { grid-row: auto; }
+  .training-search > div { padding: 0.65rem; }
+  .spin-launch-readout b { font-size: 0.65rem; }
+}
+.spin-drag-handle { position: absolute; width: 48px; height: 48px; padding: 0; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: transparent; touch-action: none; cursor: grab; }
+.spin-drag-handle:active { cursor: grabbing; }
+.spin-elapsed { color: var(--accent); font: 0.75rem var(--font-mono), monospace; font-variant-numeric: tabular-nums; }
+@media (max-width: 1050px) { .spin-timeline { grid-template-columns: 44px 1fr auto; } }
+@media (max-width: 820px) {
+  .roulette-hero-instrument dl { position: static; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .roulette-hero-instrument dl div { padding: 0.75rem 0.25rem; }
+  .roulette-hero-instrument dd { font-size: 0.75rem; }
+  .roulette-case .training-canvas { min-height: 29rem; }
+  .training-split { padding-block: 1.5rem; }
+}
+/* Inactive diagrams leave the visual and keyboard reading order together. */
+.training-canvas > [inert] { visibility: hidden; }
+.roulette-case .results-lower :is(.baseline-comparison > p, .failure-mode header span) { font-family: var(--font-sans), sans-serif; font-size: 0.9rem; line-height: 1.6; }
+/* The same explanatory motion runs on touch and desktop. */
+.training-stage-2 :is(.training-loss, .validation-loss) { stroke-dasharray: 800; stroke-dashoffset: 800; animation: case-trace-draw 1400ms ease-out forwards; }
+.training-stage-2 .validation-loss { animation-delay: 160ms; }
+.training-active-model > span { display: block; margin-bottom: 0.5rem; }
+.training-ablation { display: flex; flex-direction: column; justify-content: center; padding: 1.25rem; gap: 1.25rem; }
+.training-ablation > p { margin: 0; font-size: 0.7rem; }
+.training-ablation > h3 { margin: 0; font: 500 clamp(1.4rem, 2.4vw, 2rem)/1.2 var(--font-sans), sans-serif; letter-spacing: -0.035em; }
+.training-ablation > .ablation-row { min-height: 0; border: 0; padding: 0; display: grid; grid-template-columns: 1fr auto; gap: 0.65rem; }
+.training-ablation .ablation-row > span { font-size: 0.75rem; color: var(--text); }
+.ablation-row strong { font-size: 0.85rem; color: var(--accent); font-weight: 400; }
+.training-ablation .ablation-row strong small { display: inline; font-size: 0.65rem; color: var(--muted); }
+.ablation-row > i { grid-column: 1 / -1; height: 8px; background: var(--surface-raised); }
+.ablation-row > i > b { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; }
+.training-ablation > .diagram-caption { font-family: var(--font-sans), sans-serif; line-height: 1.6; font-size: 0.85rem; }
+.baseline-comparison header > p { font-family: var(--font-sans), sans-serif; font-size: 1rem; }
+.baseline-comparison header { flex-wrap: wrap; gap: 1rem; }
+.roulette-case .baseline-comparison button { font-size: 0.7rem; padding-inline: 0.75rem; }
+.dataset-instruction p { font-family: var(--font-sans), sans-serif; font-size: 1.5rem; letter-spacing: -0.035em; }
+@keyframes case-trace-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .training-stage-2 :is(.training-loss, .validation-loss) { animation: none; stroke-dashoffset: 0; }
+}
+
+@media (max-width: 820px) { .roulette-case .results-heading h2 { font-size: clamp(2.6rem, 10vw, 3.8rem); line-height: 1.04; } }
+@media (max-width: 820px) {
+  .geometry-transform text { font-size: 22px; }
+  .loss-chart text { font-size: 15px; }
+  .spin-slope text { font-size: 16px; }
+  .spin-slope header { flex-wrap: wrap; gap: 0.5rem; font-size: 0.65rem; }
+}
+
+/* Decorative landing loop: CSS keeps it independent of client hydration. */
+.roulette-landing-wheel { min-width: 0; width: 100%; max-width: 42rem; margin: 0 auto; pointer-events: none; }
+.roulette-landing-wheel svg { display: block; width: 100%; max-height: 70svh; }
+.landing-wheel-rings, .landing-wheel-rotor { fill: none; stroke: #444b4e; stroke-width: 1; }
+.landing-wheel-rotor, .landing-wheel-orbit { transform-origin: 260px 260px; }
+.landing-wheel-rotor { animation: landing-wheel-turn 36s linear infinite reverse; }
+.landing-wheel-orbit { animation: landing-wheel-turn 7s linear infinite; }
+.landing-wheel-zero { stroke: var(--accent); stroke-width: 2; opacity: 0.5; }
+.landing-wheel-trail { fill: none; stroke: var(--accent); stroke-width: 2; }
+.landing-wheel-ball { fill: var(--accent); filter: drop-shadow(0 0 7px rgb(216 255 69 / 0.55)); }
+@keyframes landing-wheel-turn { to { transform: rotate(360deg); } }
+.hero-story-link { position: absolute; bottom: 2rem; left: var(--page-gutter); display: flex; gap: 1rem; align-items: center; min-height: 44px; color: var(--muted); font-size: 0.9rem; }
+.hero-story-link:hover { color: var(--accent); }
+@media (max-width: 820px) {
+  .roulette-hero { padding-bottom: 2rem; }
+  .hero-story-link { position: static; }
+  .roulette-landing-wheel svg { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-wheel-rotor, .landing-wheel-orbit { animation: none; }
+}
+
+/* Reading drives the chapter illustrations; scrolling stays native. */
+.roulette-scroll-story { padding-block: clamp(3.5rem, 7vw, 7rem); border-top: 1px solid var(--rule); }
+.scroll-story-heading { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: end; margin-bottom: 3rem; }
+.scroll-story-heading h2 { margin: 0; font-size: clamp(2.6rem, 4vw, 4.5rem); font-weight: 500; line-height: 1.04; letter-spacing: -0.055em; }
+.scroll-story-heading > p { max-width: 42rem; margin: 0; color: #c8cbce; font-size: 1.05rem; line-height: 1.65; }
+.scroll-chapters { position: relative; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 3rem; align-items: start; }
+.scroll-chapter-scene { grid-column: 2; grid-row: 1; position: sticky; top: 6rem; background: var(--background); min-width: 0; z-index: 3; }
+.scroll-chapter-text { grid-column: 1; grid-row: 1; }
+.scroll-chapter { min-height: 65svh; display: flex; flex-direction: column; justify-content: center; padding-block: 3rem; scroll-margin-top: 7rem; }
+.scroll-chapter:last-child { min-height: 70svh; }
+.scroll-chapter-label { display: flex; gap: 0.75rem; color: var(--accent); font: 0.8rem var(--font-mono), monospace; }
+.scroll-chapter h3 { margin: 0.6rem 0 1rem; font-size: clamp(1.6rem, 2.5vw, 2.4rem); font-weight: 500; line-height: 1.15; letter-spacing: -0.035em; }
+.scroll-chapter > p:last-child { margin: 0; max-width: 34rem; color: #c8cbce; font-size: 1.05rem; line-height: 1.7; }
+.scroll-chapter-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.scroll-chapter-progress li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-height: 48px; padding-block: 0.6rem; border-top: 2px solid var(--rule); color: var(--muted); font: 0.75rem var(--font-mono), monospace; }
+.scroll-chapter-progress li[aria-current="step"] { color: var(--accent); border-color: var(--accent); }
+.scroll-chapter-visual { height: clamp(24rem, 62svh, 38rem); animation: chapter-scene-enter 280ms ease-out; }
+.vision-scroll-scene { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
+.vision-scroll-scene .pipeline-frame { flex: 1; height: auto; max-height: none; min-height: 0; width: 100%; border: 0; }
+.vision-scroll-scene .pipeline-frame img { object-fit: contain; filter: none; transform: none; opacity: 1; }
+.vision-scroll-scene .pipeline-frame::after { display: none; }
+.vision-scroll-scene .geometry-transform, .vision-scroll-scene .pipeline-charts { width: 100%; height: auto; max-height: 80%; }
+.vision-scroll-scene .diagram-caption { margin: 0; font-size: 0.85rem; }
+.scroll-chapter-visual .training-canvas { height: 100%; min-height: 0; border: 0; padding: 0; margin: 0; }
+.scroll-chapter-visual .training-canvas > div { inset: 1rem 0; }
+.scroll-chapter-visual .training-split { padding: 1.5rem 0; }
+.scroll-chapter-visual .training-split > div { height: min(22svh, 12rem); }
+.training-model-overview { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 0.65rem; }
+.training-model-overview > p { margin: 0 0 0.5rem; font-size: 0.8rem; color: var(--muted); }
+.training-model-card { display: grid; grid-template-columns: 1fr auto; padding: 1rem; gap: 0.4rem 1rem; border: 1px solid var(--rule); }
+.training-model-card > span { color: var(--accent); font-size: 0.75rem; }
+.training-model-card strong { font-size: 0.7rem; font-weight: 400; }
+.training-model-card strong small { color: var(--muted); }
+.training-model-card p, .training-model-card code { margin: 0; color: var(--muted); font-size: 0.65rem; }
+.scroll-training-notes { margin-top: 3rem; }
+@keyframes chapter-scene-enter { from { opacity: 0.7; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 820px) {
+  .scroll-story-heading { grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  .scroll-story-heading h2 { font-size: clamp(2.6rem, 10vw, 3.8rem); }
+  .scroll-story-heading > p { font-size: 0.95rem; }
+  .scroll-chapters { display: block; }
+  .scroll-chapter-scene { top: 5rem; padding-top: 0.5rem; border-bottom: 1px solid var(--rule); }
+  .scroll-chapter-progress { gap: 0.5rem; }
+  .scroll-chapter-progress li { min-height: 40px; font-size: 0.65rem; gap: 0.35rem; }
+  .scroll-chapter-visual { height: clamp(17rem, 39svh, 24rem); }
+  .scroll-chapter { min-height: 53svh; padding-block: 2rem; justify-content: center; }
+  .scroll-chapter:last-child { min-height: 58svh; }
+  .scroll-chapter h3 { font-size: 1.7rem; }
+  .scroll-chapter > p:last-child { font-size: 0.95rem; line-height: 1.65; }
+  .vision-scroll-scene { padding-block: 0.75rem; gap: 0.5rem; }
+  .vision-scroll-scene .diagram-caption { font-size: 0.75rem; }
+  .scroll-chapter-visual .training-split { padding: 0.5rem; }
+  .scroll-chapter-visual .training-split > div { height: 11svh; margin-top: 1rem; }
+  .scroll-chapter-visual .training-model-overview { gap: 0.4rem; }
+  .training-model-overview > p { font-size: 0.7rem; }
+  .training-model-card { padding: 0.6rem; gap: 0.3rem; }
+  .training-model-card > span { font-size: 0.6rem; }
+  .training-model-card strong { font-size: 0.6rem; }
+  .training-model-card p, .training-model-card code { font-size: 0.55rem; }
+  .scroll-chapter-visual .training-run { gap: 0.5rem; }
+  .scroll-chapter-visual .loss-chart svg { max-height: 14svh; }
+  .scroll-chapter-visual .loss-chart .diagram-caption { font-size: 0.7rem; margin-block: 0.5rem; }
+  .scroll-chapter-visual .training-run dl { gap: 0.5rem; grid-template-columns: repeat(3, 1fr); }
+  .scroll-chapter-visual .training-run dl div { padding-block: 0.25rem; }
+  .scroll-chapter-visual .training-run dt { font-size: 0.5rem; }
+  .scroll-chapter-visual .training-ablation { padding: 0.5rem; gap: 0.65rem; }
+  .scroll-chapter-visual .training-ablation > h3 { font-size: 1.2rem; }
+  .scroll-chapter-visual .training-ablation > p { font-size: 0.6rem; }
+  .scroll-chapter-visual .training-ablation .ablation-row { gap: 0.4rem; }
+  .scroll-chapter-visual .training-ablation .ablation-row > span { font-size: 0.65rem; }
+  .scroll-chapter-visual .training-ablation > .diagram-caption { font-size: 0.7rem; }
+}
+@media (prefers-reduced-motion: reduce) { .scroll-chapter-visual { animation: none; } }
+
+.training-ablation > * { flex-shrink: 0; }
+@media (max-width: 820px) {
+  #training .scroll-chapter-visual { height: clamp(20rem, 44svh, 26rem); }
+}
+@media (max-height: 600px) and (max-width: 820px) {
+  .scroll-chapter-scene { position: relative; top: auto; }
+}

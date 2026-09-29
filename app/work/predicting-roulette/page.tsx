@@ -11,7 +11,7 @@ import { ResultsExplorer } from "@/components/results-explorer";
 
 export const metadata: Metadata = {
   title: "Predicting Roulette — Arthur Robertson",
-  description: "A project using roulette video to track motion and test short-range forecasts.",
+  description: "From 5.46 million video frames to three neural networks: tracking roulette motion and forecasting what comes next.",
   alternates: { canonical: "/work/predicting-roulette" },
 };
 

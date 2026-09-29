@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { ArrowIcon } from "@/components/arrow-icon";
 import { HORIZON_RESULTS, HORIZONS, type Horizon } from "@/content/roulette-data";
@@ -36,7 +35,7 @@ function linePath(values: number[], max: number) {
 }
 
 function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (value: Horizon) => void }) {
-  const timing = HORIZONS.map((horizon) => HORIZON_RESULTS[horizon].timingMae);
+  const timing = HORIZONS.map((horizon) => HORIZON_RESULTS[horizon].timingMae / 50);
   const ball = HORIZONS.map((horizon) => HORIZON_RESULTS[horizon].ballMae);
   const wheel = HORIZONS.map((horizon) => HORIZON_RESULTS[horizon].wheelMae);
   const selectedIndex = HORIZONS.indexOf(selected);
@@ -45,7 +44,7 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
   return (
     <div className="horizon-chart-wrap">
       <div className="horizon-mobile-table" aria-label="Prediction errors by observation length">
-        <header><span>INPUT</span><span>TIME MAE</span><span>BALL MAE</span><span>WHEEL MAE</span></header>
+        <header><span>INPUT</span><span>TIME MAE</span><span>BALL rad</span><span>WHEEL rad</span></header>
         {HORIZONS.map((horizon) => {
           const result = HORIZON_RESULTS[horizon];
           return (
@@ -60,10 +59,11 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
       </div>
       <svg
         className="horizon-chart"
-        viewBox="0 0 1000 310"
+        viewBox="0 0 1000 360"
         role="img"
         aria-label="Prediction errors fall as the input horizon grows from 100 to 500 frames"
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const rect = event.currentTarget.getBoundingClientRect();
           const localX = ((event.clientX - rect.left) / rect.width) * 1000;
           const index = Math.max(0, Math.min(4, Math.round((localX - 74) / 190)));
@@ -74,15 +74,15 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
           <path d="M74 48V246H834" />
           {[0, 1, 2, 3, 4].map((index) => <path key={index} d={`M74 ${48 + index * 49.5}H834`} />)}
         </g>
-        <text className="axis-label timing-axis" x="74" y="31">MAE (frames)</text>
-        <text className="axis-label rad-axis" x="730" y="31">MAE (rad)</text>
+        <text className="axis-label timing-axis" x="74" y="31">TIME ERROR (s)</text>
+        <text className="axis-label rad-axis" x="730" y="31">ANGLE ERROR (rad)</text>
 
-        <path className="result-line timing-line" d={linePath(timing, 70)} />
+        <path className="result-line timing-line" d={linePath(timing, 1.4)} />
         <path className="result-line ball-line" d={linePath(ball, 0.9)} />
         <path className="result-line wheel-line" d={linePath(wheel, 0.9)} />
 
         {HORIZONS.map((horizon, index) => {
-          const timingPoint = chartPoint(index, timing[index], 70);
+          const timingPoint = chartPoint(index, timing[index], 1.4);
           const ballPoint = chartPoint(index, ball[index], 0.9);
           const wheelPoint = chartPoint(index, wheel[index], 0.9);
           return (
@@ -92,9 +92,9 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
               <rect className="ball-point" x={ballPoint.x - 5} y={ballPoint.y - 5} width="10" height="10" />
               <rect className="wheel-point" x={wheelPoint.x - 4} y={wheelPoint.y - 4} width="8" height="8" />
               <text x={timingPoint.x - 20} y={timingPoint.y - 12}>{timing[index].toFixed(2)}</text>
-              <text x={ballPoint.x + 9} y={ballPoint.y + 4}>{ball[index].toFixed(3)}</text>
-              <text x={wheelPoint.x + 9} y={wheelPoint.y + 4}>{wheel[index].toFixed(3)}</text>
-              <text className="horizon-tick" x={timingPoint.x - 15} y="276">{horizon}</text>
+              <text x={ballPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={ballPoint.y + 4}>{ball[index].toFixed(3)}</text>
+              <text x={wheelPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={wheelPoint.y + 4}>{wheel[index].toFixed(3)}</text>
+              <text className="horizon-tick" x={timingPoint.x - 15} y="276">{HORIZON_RESULTS[horizon].seconds}s</text>
             </g>
           );
         })}
@@ -105,7 +105,7 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
         </g>
 
         <g className="selected-results" transform="translate(866 48)">
-          <text className="setting-label" x="0" y="0">AT T = {selected}</text>
+          <text className="setting-label" x="0" y="0">{HORIZON_RESULTS[selected].seconds}s INPUT</text>
           <text className="result-large" x="0" y="42">{HORIZON_RESULTS[selected].seconds.toFixed(1)}s</text>
           <text x="0" y="63">observed</text>
           <path d="M0 80H120" />
@@ -113,15 +113,15 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
           <text x="0" y="139">timing MAE</text>
           <path d="M0 156H120" />
           <text className="result-large prediction" x="0" y="194">{HORIZON_RESULTS[selected].ballMae.toFixed(3)}</text>
-          <text x="0" y="215">ball MAE (rad)</text>
+          <text x="0" y="215">ball error (rad)</text>
           <path d="M0 232H120" />
           <text className="result-large" x="0" y="270">{HORIZON_RESULTS[selected].wheelMae.toFixed(3)}</text>
-          <text x="0" y="291">wheel MAE (rad)</text>
+          <text x="0" y="291">wheel error (rad)</text>
         </g>
       </svg>
 
       <label className="horizon-scrubber">
-        <span>SCRUB OBSERVATION HORIZON</span>
+        <span>Change how much of the spin the models see</span>
         <input
           type="range"
           min="0"
@@ -130,6 +130,7 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
           value={selectedIndex}
           onChange={(event) => onSelect(HORIZONS[Number(event.target.value)])}
           aria-label="Observation horizon"
+          aria-valuetext={`${HORIZON_RESULTS[selected].seconds} seconds`}
         />
       </label>
     </div>
@@ -139,7 +140,7 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
 function FailureTrace({ runId, onReplay }: { runId: number; onReplay: () => void }) {
   return (
     <div className="failure-mode">
-      <header><p>WHERE IT FAILS</p><span>Sudden slowing and missing frames still cause large errors.</span></header>
+      <header><p>Where the forecasts break down</p><span>The difficult cases involve abrupt slowing or a ball hidden from view. A forecast can follow the earlier motion well and still miss what happens after that interruption.</span></header>
       <div className="failure-trace-wrap">
         <svg viewBox="0 0 720 210" role="img" aria-label="Example failure where predicted and actual trajectories diverge after occlusion">
           <path className="failure-grid" d="M20 26H700M20 96H700M20 166H700M20 26V166M360 26V166M700 26V166" />
@@ -155,30 +156,25 @@ function FailureTrace({ runId, onReplay }: { runId: number; onReplay: () => void
           <text x="20" y="194">stable motion</text><text x="352" y="194">abrupt deceleration</text><text x="624" y="194">error tail</text>
         </svg>
       </div>
-      <button type="button" onClick={onReplay}><span aria-hidden="true">▶</span> REPLAY EXAMPLE</button>
+      <button type="button" onClick={onReplay}><span aria-hidden="true">▶</span> REPLAY ILLUSTRATION</button>
     </div>
   );
 }
 
 export function ResultsExplorer() {
-  const reduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<Horizon>(500);
   const [metric, setMetric] = useState<BaselineMetric>("trajectory");
   const [runId, setRunId] = useState(0);
 
   return (
-    <motion.section
+    <section
       id="results"
       className="results-explorer page-gutter"
       aria-labelledby="results-title"
-      initial={reduceMotion ? false : { opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.08 }}
-      transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
     >
       <header className="results-heading">
-        <h2 id="results-title">More context,<br />lower error.</h2>
-        <p>Across all three tasks, predictions improved as the observed window grew.</p>
+        <h2 id="results-title">The models learned<br />from the motion.</h2>
+        <p>After six seconds of video, the ball model’s mean trajectory error was 0.185 radians—about 10.6°. That is 88% lower than simply keeping the last observed angle. Giving the models more of the spin improved all three predictions.</p>
       </header>
 
       <HorizonChart selected={selected} onSelect={setSelected} />
@@ -186,10 +182,10 @@ export function ResultsExplorer() {
       <div className="results-lower">
         <div className="baseline-comparison">
           <header>
-            <p>BASELINE COMPARISON AT T = 300</p>
+            <p>How much did the model improve?</p>
             <div role="group" aria-label="Baseline metric">
-              <button type="button" onClick={() => setMetric("trajectory")} aria-pressed={metric === "trajectory"}>TRAJECTORY</button>
-              <button type="button" onClick={() => setMetric("drop-off")} aria-pressed={metric === "drop-off"}>DROP-OFF</button>
+              <button type="button" onClick={() => setMetric("trajectory")} aria-pressed={metric === "trajectory"}>Whole trajectory</button>
+              <button type="button" onClick={() => setMetric("drop-off")} aria-pressed={metric === "drop-off"}>At drop-off</button>
             </div>
           </header>
           <div className="baseline-bars">
@@ -201,17 +197,17 @@ export function ResultsExplorer() {
               </div>
             ))}
           </div>
-          <p>At six seconds of input, the ball-path model is compared with two simple baselines.</p>
+          <p>The comparison is made after six seconds of observed motion. “Last-angle” keeps the last position; “Random” guesses an angle. The bars show mean error in radians, so shorter is better.</p>
         </div>
 
         <FailureTrace runId={runId} onReplay={() => setRunId((current) => current + 1)} />
       </div>
 
       <div className="scope-boundary">
-        <h3>Read the full paper<span>.</span></h3>
-        <p>The dissertation contains the complete method, experiments, limitations, and results.</p>
-        <a className="text-link" href={site.project.pdf} target="_blank" rel="noreferrer">Read the dissertation <ArrowIcon /></a>
+        <h3>The full experiment<span>.</span></h3>
+        <p>The project showed that video contains enough information to learn useful forecasts of roulette motion. Predicting the final pocket is a further problem: these experiments stop at drop-off. The dissertation covers the dataset, model choices, comparisons, and the cases that were hardest to predict.</p>
+        <a className="text-link" href={site.project.pdf} target="_blank" rel="noreferrer">Read the methods and results <ArrowIcon /></a>
       </div>
-    </motion.section>
+    </section>
   );
 }
