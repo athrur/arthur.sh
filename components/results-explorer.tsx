@@ -91,9 +91,9 @@ function HorizonChart({ selected, onSelect }: { selected: Horizon; onSelect: (va
               <rect className="timing-point" x={timingPoint.x - 5} y={timingPoint.y - 5} width="10" height="10" />
               <rect className="ball-point" x={ballPoint.x - 5} y={ballPoint.y - 5} width="10" height="10" />
               <rect className="wheel-point" x={wheelPoint.x - 4} y={wheelPoint.y - 4} width="8" height="8" />
-              <text x={timingPoint.x - 20} y={timingPoint.y - 12}>{timing[index].toFixed(2)}</text>
-              <text x={ballPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={ballPoint.y + 4}>{ball[index].toFixed(3)}</text>
-              <text x={wheelPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={wheelPoint.y + 4}>{wheel[index].toFixed(3)}</text>
+              <text x={timingPoint.x - 20} y={timingPoint.y + (index === 0 ? 18 : -12)}>{timing[index].toFixed(2)}</text>
+              <text x={ballPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={ballPoint.y - 9}>{ball[index].toFixed(3)}</text>
+              <text x={wheelPoint.x + (index === HORIZONS.length - 1 ? -9 : 9)} textAnchor={index === HORIZONS.length - 1 ? "end" : "start"} y={wheelPoint.y - 9}>{wheel[index].toFixed(3)}</text>
               <text className="horizon-tick" x={timingPoint.x - 15} y="276">{HORIZON_RESULTS[horizon].seconds}s</text>
             </g>
           );
