@@ -1,96 +1,63 @@
-"use client";
-
-import { motion, useReducedMotion } from "motion/react";
-import { RESEARCH_CHAPTERS } from "@/content/roulette-data";
 import { site } from "@/content/site";
 
-const tickPaths = Array.from({ length: 48 }, (_, index) => {
-  const angle = (index / 48) * Math.PI * 2;
-  const inner = { x: 360 + Math.cos(angle) * 244, y: 330 + Math.sin(angle) * 244 };
-  const outer = { x: 360 + Math.cos(angle) * (index % 4 === 0 ? 258 : 252), y: 330 + Math.sin(angle) * (index % 4 === 0 ? 258 : 252) };
-  return `M${inner.x.toFixed(2)} ${inner.y.toFixed(2)}L${outer.x.toFixed(2)} ${outer.y.toFixed(2)}`;
+function point(angle: number, radius: number) {
+  return {
+    x: Number((260 + Math.cos(angle) * radius).toFixed(3)),
+    y: Number((260 + Math.sin(angle) * radius).toFixed(3)),
+  };
+}
+
+const pockets = Array.from({ length: 37 }, (_, index) => {
+  const angle = index * Math.PI * 2 / 37;
+  const inner = point(angle, 134);
+  const outer = point(angle, 162);
+  return `M${inner.x} ${inner.y}L${outer.x} ${outer.y}`;
 });
 
-const HERO_BALL_PATH = "M184 402A190 190 0 0 1 425 151C517 173 558 260 540 351";
-const OBSERVED_START_ANGLE = 2.753;
-const OBSERVED_END_ANGLE = 5.061;
-
-const observed = Array.from({ length: 18 }, (_, index) => {
-  const angle = OBSERVED_START_ANGLE + (index / 17) * (OBSERVED_END_ANGLE - OBSERVED_START_ANGLE);
-  return { x: 360 + Math.cos(angle) * 190, y: 330 + Math.sin(angle) * 190 };
+const trail = Array.from({ length: 24 }, (_, index) => {
+  const start = point((-72 + index * 3) * Math.PI / 180, 190);
+  const end = point((-69 + index * 3) * Math.PI / 180, 190);
+  return { path: `M${start.x} ${start.y}A190 190 0 0 1 ${end.x} ${end.y}`, opacity: (index + 1) / 24 * 0.75 };
 });
+
+function LoopingWheel() {
+  return (
+    <div className="roulette-landing-wheel" aria-hidden="true">
+      <svg viewBox="0 0 520 520" focusable="false">
+        <g className="landing-wheel-rings">
+          <circle cx="260" cy="260" r="215" />
+          <circle cx="260" cy="260" r="190" />
+          <circle cx="260" cy="260" r="162" />
+          <circle cx="260" cy="260" r="134" />
+          <circle cx="260" cy="260" r="30" />
+        </g>
+        <g className="landing-wheel-rotor">
+          {pockets.map((path, index) => <path d={path} key={index} />)}
+          <path className="landing-wheel-zero" d="M394 260H422" />
+          <path d="M245 260H275M260 245V275" />
+        </g>
+        <g className="landing-wheel-orbit">
+          {trail.map((segment, index) => <path className="landing-wheel-trail" d={segment.path} opacity={segment.opacity} key={index} />)}
+          <circle className="landing-wheel-ball" cx="450" cy="260" r="6" />
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 export function RouletteHero() {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <section
-      className="roulette-hero page-gutter case-snap-section"
-      id="overview"
-      aria-labelledby="roulette-title"
-    >
+    <section className="roulette-hero page-gutter" id="overview" aria-labelledby="roulette-title">
       <div className="roulette-hero-copy">
         <h1 id="roulette-title">Predicting roulette<br />from video.</h1>
         <div>
-          <p>Roulette is deterministic, but small differences at the start of a spin compound quickly.</p>
-          <p>The project recovers that motion from video, then tests how far ahead it can be forecast.</p>
+          <p>How much of a roulette spin can you predict from a few seconds of video?</p>
+          <p>I built a computer vision system to follow the ball and wheel, assembled a dataset of 2,765 spins, and trained three neural networks to forecast their motion. The models learned enough to substantially outperform the simple baselines.</p>
         </div>
-        <a className="roulette-primary-link" href={site.project.pdf} target="_blank" rel="noreferrer">Read the paper <span aria-hidden="true">↗</span></a>
+        <a className="roulette-primary-link" href={site.project.pdf} target="_blank" rel="noreferrer">Read the dissertation <span aria-hidden="true">↗</span></a>
       </div>
-
-      <div className="roulette-hero-instrument" aria-hidden="true">
-        <p>Six seconds observed. The model forecasts the path to t*.</p>
-        <svg viewBox="0 0 720 660">
-          <g className="hero-wheel-rings">
-            <circle cx="360" cy="330" r="258" />
-            <circle cx="360" cy="330" r="230" />
-            <circle cx="360" cy="330" r="206" />
-            <circle cx="360" cy="330" r="190" />
-            <circle cx="360" cy="330" r="132" />
-            <circle cx="360" cy="330" r="50" />
-            {tickPaths.map((path, index) => <path d={path} key={index} />)}
-          </g>
-          <motion.path
-            className="hero-observed-arc"
-            d="M184 402A190 190 0 0 1 425 151"
-            initial={false}
-            animate={reduceMotion ? { pathLength: 1, opacity: 1 } : { pathLength: [0, 0, 1, 1, 0], opacity: [0, 1, 1, 1, 0] }}
-            transition={{ duration: 6, times: [0, 0.08, 0.44, 0.92, 1], repeat: reduceMotion ? 0 : Infinity, ease: "linear" }}
-          />
-          <motion.path
-            className="hero-forecast-arc"
-            d="M425 151C517 173 558 260 540 351"
-            initial={false}
-            animate={reduceMotion ? { pathLength: 1, opacity: 1 } : { pathLength: [0, 0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 1, 0] }}
-            transition={{ duration: 6, times: [0, 0.44, 0.5, 0.86, 0.94, 1], repeat: reduceMotion ? 0 : Infinity, ease: "linear" }}
-          />
-          {observed.map((point, index) => <rect key={index} x={point.x - 4} y={point.y - 4} width="8" height="8" />)}
-          {reduceMotion ? <circle className="hero-ball" cx="425" cy="151" r="8" /> : (
-            <circle className="hero-ball" r="8">
-              <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;0.63;1;1;0" keyTimes="0;0.08;0.44;0.86;0.94;1" path={HERO_BALL_PATH} />
-              <animate attributeName="opacity" dur="6s" repeatCount="indefinite" calcMode="linear" values="0;1;1;1;0;0" keyTimes="0;0.08;0.86;0.92;0.94;1" />
-            </circle>
-          )}
-          <path className="hero-vector" d="M425 151 493 205" />
-          <path className="hero-cross" d="M345 330h30M360 315v30" />
-          <text className="hero-phase-label is-observed" x="186" y="438">OBSERVED · 0–6s</text>
-          <text className="hero-phase-label is-forecast" x="500" y="388">FORECAST · 6s–t*</text>
-        </svg>
-        <dl>
-          <div><dt>OBSERVED</dt><dd>6.0 s</dd></div>
-          <div><dt>BALL MAE</dt><dd>0.185 rad</dd></div>
-          <div><dt>TARGET</dt><dd>t*</dd></div>
-        </dl>
-      </div>
-
-      <ol className="roulette-chapter-rail" aria-label="Research chapters">
-        {RESEARCH_CHAPTERS.map((chapter, index) => (
-          <li className={index === 0 ? "is-active" : ""} key={chapter.number}>
-            <a href={chapter.href}><span>{chapter.number}</span><b>{chapter.label}</b><small>{chapter.detail}</small><i /></a>
-          </li>
-        ))}
-      </ol>
-      <p className="hero-scroll-cue" aria-hidden="true">PROJECT OVERVIEW <span>↓</span></p>
+      <LoopingWheel />
+      <a className="hero-story-link" href="#dataset">How I built it <span aria-hidden="true">↓</span></a>
     </section>
   );
 }

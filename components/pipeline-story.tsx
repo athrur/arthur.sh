@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { ScrollChapters } from "@/components/roulette/scroll-chapters";
 import { PIPELINE_STAGES } from "@/content/roulette-data";
 
 const RING_POINTS = Array.from({ length: 24 }, (_, index) => {
@@ -37,23 +37,14 @@ function stableCoordinate(value: number) {
 function RawFrame({ stage }: { stage: number }) {
   return (
     <div className="pipeline-frame" aria-hidden="true">
-      <Image src="/roulette-frame-angle.jpg" alt="" fill sizes="32vw" />
-      <div className={`segmentation-overlay${stage >= 1 ? " is-visible" : ""}`}>
-        <span className="seg-ball" />
-        <span className="seg-zero" />
-        <svg viewBox="0 0 320 300">
-          <path d="M38 142C72 63 174 21 260 78C312 114 304 208 244 254C171 310 67 258 38 184Z" />
-          <path d="M178 102 191 96 202 103 201 117 187 122 176 114Z" />
-          <path d="M84 177 92 169 102 175 100 188 89 191Z" />
-        </svg>
-      </div>
-      <div className="scan-line" />
-      <p>{stage === 0 ? "RAW / OBLIQUE FRAME" : "YOLOv11 / POLYGON CENTROIDS"}</p>
+      <Image src={stage === 0 ? "/roulette-frame-clean.jpg" : "/roulette-frame-angle.jpg"} alt="" fill sizes="(max-width: 820px) 90vw, 24vw" />
+      <p>{stage === 0 ? "VIDEO FRAME" : "BALL AND ZERO LABELS"}</p>
     </div>
   );
 }
 
 function GeometryTransform({ stage }: { stage: number }) {
+  const reduceMotion = useReducedMotion();
   return (
     <svg className="geometry-transform" viewBox="0 0 720 320" role="img" aria-label="Detected elliptical trajectory transformed into a normalised unit circle">
       <defs>
@@ -63,7 +54,7 @@ function GeometryTransform({ stage }: { stage: number }) {
       </defs>
 
       <g className={`ellipse-state${stage >= 1 ? " is-visible" : ""}`}>
-        <text x="72" y="25">DETECTED ELLIPSE</text>
+        <text x="72" y="25">CAMERA VIEW</text>
         <ellipse cx="180" cy="150" rx="132" ry="92" />
         <ellipse cx="180" cy="150" rx="114" ry="78" className="geometry-dashed" />
         <path d="M35 150H325M180 39V261" className="geometry-axis" />
@@ -79,7 +70,7 @@ function GeometryTransform({ stage }: { stage: number }) {
       <text className={`homography-label${stage >= 2 ? " is-visible" : ""}`} x="344" y="135">H</text>
 
       <g className={`circle-state${stage >= 2 ? " is-visible" : ""}`}>
-        <text x="490" y="25">TOP-DOWN UNIT CIRCLE</text>
+        <text x="490" y="25">NORMALISED VIEW</text>
         <circle cx="540" cy="150" r="118" />
         <circle cx="540" cy="150" r="96" className="geometry-dashed" />
         <circle cx="540" cy="150" r="45" className="geometry-dashed" />
@@ -93,7 +84,7 @@ function GeometryTransform({ stage }: { stage: number }) {
           return <path key={index} d={`M${innerX} ${innerY}L${outerX} ${outerY}`} />;
         })}
         <path className="normalised-trace" d={pointsToPath(RING_POINTS.map((point) => ({ x: point.x + 360, y: point.y })))} />
-        {RING_POINTS.map((point, index) => <rect className={index < 12 ? "observed-square" : "predicted-square"} key={index} x={point.x + 357} y={point.y - 3} width="6" height="6" />)}
+        {RING_POINTS.map((point, index) => <motion.rect className="observed-square" key={index} x={point.x + 357} y={point.y - 3} width="6" height="6" initial={false} animate={{ x: stage >= 2 ? 0 : -360, y: stage >= 2 ? 0 : (150 - point.y) * 0.28 }} transition={{ duration: reduceMotion ? 0 : 0.65, delay: reduceMotion ? 0 : index * 0.018 }} />)}
       </g>
     </svg>
   );
@@ -123,110 +114,26 @@ function TrajectoryReadout({ stage }: { stage: number }) {
 }
 
 export function PipelineStory() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const progressRef = useRef<HTMLElement>(null);
-  const reduceMotion = useReducedMotion();
-  const [activeStage, setActiveStage] = useState(0);
-
-  useEffect(() => {
-    let frame = 0;
-
-    const update = () => {
-      frame = 0;
-      const section = sectionRef.current;
-      if (!section) return;
-      const available = Math.max(1, section.offsetHeight - window.innerHeight);
-      const progress = Math.max(0, Math.min(1, (window.scrollY - section.offsetTop) / available));
-      const nextStage = Math.min(PIPELINE_STAGES.length - 1, Math.round(progress * PIPELINE_STAGES.length));
-      setActiveStage((current) => (current === nextStage ? current : nextStage));
-      if (progressRef.current) progressRef.current.style.transform = `scaleY(${progress})`;
-    };
-
-    const handleScroll = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, []);
-
-  const scrollToStage = (index: number) => {
-    const section = sectionRef.current;
-    if (!section) return;
-    window.scrollTo({
-      top: section.offsetTop + index * window.innerHeight,
-      behavior: reduceMotion ? "auto" : "smooth",
-    });
-  };
-
-  const stage = PIPELINE_STAGES[activeStage];
-
   return (
-    <section className="pipeline-story" id="vision" ref={sectionRef} aria-labelledby="pipeline-title">
-      <div className="pipeline-sticky page-gutter">
-        <div className="pipeline-copy">
-          <h2 id="pipeline-title">Recovering<br />the motion.</h2>
-          <p className="pipeline-lede">Each camera view has to become a clean, comparable trajectory before it can be used for prediction.</p>
-
-          <ol className="pipeline-steps" aria-label="Research pipeline stages">
-            {PIPELINE_STAGES.map((item, index) => (
-              <li className={index === activeStage ? "is-active" : index < activeStage ? "is-complete" : ""} key={item.key}>
-                <button type="button" onClick={() => scrollToStage(index)} aria-current={index === activeStage ? "step" : undefined}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  {item.label}
-                  <i aria-hidden="true" />
-                </button>
-              </li>
-            ))}
-          </ol>
-
-          <div className="pipeline-stage-copy" aria-live="polite">
-            <p>{stage.title}</p>
-            <span>{stage.body}</span>
-          </div>
-
-          <dl className="pipeline-facts">
-            <div><dt>42</dt><dd>videos</dd></div>
-            <div><dt>5,463,775</dt><dd>frames</dd></div>
-            <div><dt>1.36 px</dt><dd>centroid error</dd></div>
-          </dl>
-        </div>
-
-        <div className={`pipeline-visual stage-${activeStage}`}>
-          <div className="pipeline-visual-head">
-            <span>PIPELINE / {String(activeStage + 1).padStart(2, "0")}</span>
-            <span>{stage.label}</span>
-          </div>
-          <div className="pipeline-visual-grid">
-            <RawFrame stage={activeStage} />
-            <GeometryTransform stage={activeStage} />
-          </div>
-          <TrajectoryReadout stage={activeStage} />
-          <div className={`forecast-readout${activeStage === 3 ? " is-visible" : ""}`}>
-            <span>TRACK</span>
-            <i />
-            <span>SMOOTH</span>
-            <i />
-            <span>DERIVE</span>
-            <output>θ + r + θ̇ + ṙ + t*</output>
-          </div>
-        </div>
-
-        <div className="pipeline-scroll-progress" aria-hidden="true">
-          <span>{Math.round((activeStage / 3) * 100)}%</span>
-          <i><b ref={progressRef} /></i>
-          <span>SCROLL</span>
-        </div>
-      </div>
-      <div className="case-scroll-checkpoints" aria-hidden="true">
-        {PIPELINE_STAGES.map((stage) => <i key={stage.key} />)}
-      </div>
+    <section className="roulette-scroll-story page-gutter" id="vision" aria-labelledby="pipeline-title">
+      <header className="scroll-story-heading">
+        <h2 id="pipeline-title">Making the<br />motion measurable.</h2>
+        <p>An angled camera turns a circular track into an ellipse. A hand can hide the ball, and a missed detection can look like a sudden jump. I built a processing pipeline to correct the view, repair short gaps, and extract motion the models could learn from.</p>
+      </header>
+      <ScrollChapters chapters={PIPELINE_STAGES} name="vision">
+        {(active) => <div className={`vision-scroll-scene stage-${active}`}>
+          {active < 2 ? <>
+            <RawFrame stage={active} />
+            <p className="diagram-caption">{active === 0 ? "A frame from the source footage." : "Labels identify the ball and green zero so their centres can be tracked independently."}</p>
+          </> : active === 2 ? <>
+            <GeometryTransform stage={active} />
+            <p className="diagram-caption">The angled camera view is mapped onto a circle. Illustration of the geometry correction.</p>
+          </> : <>
+            <TrajectoryReadout stage={active} />
+            <p className="diagram-caption">Position becomes angle, radius, and speed. The inward change in radius identifies drop-off, marked t*. Illustrative signals.</p>
+          </>}
+        </div>}
+      </ScrollChapters>
     </section>
   );
 }

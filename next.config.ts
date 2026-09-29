@@ -1,4 +1,10 @@
 import type { NextConfig } from "next";
+import { networkInterfaces } from "node:os";
+
+// Permit phone previews through this machine’s own addresses, without a wildcard.
+const localPreviewHosts = Object.values(networkInterfaces()).flatMap((addresses) =>
+  (addresses ?? []).filter(({ family }) => family === "IPv4").map(({ address }) => address),
+);
 
 const nextConfig: NextConfig = {
   output: "export",
@@ -6,7 +12,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   poweredByHeader: false,
-  allowedDevOrigins: ["127.0.0.1"],
+  allowedDevOrigins: localPreviewHosts,
 };
 
 export default nextConfig;

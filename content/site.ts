@@ -10,14 +10,14 @@ export const site = {
   project: {
     title: "Predicting Roulette",
     question:
-      "A small project about tracking motion in roulette footage.",
+      "How much of a roulette spin can you predict from video?",
     description:
-      "Video becomes tracked motion, then a model estimates what happens next—up to the point where the ball drops.",
+      "I built a dataset from 40 hours of roulette footage, then trained neural networks to predict the ball’s motion, the wheel’s rotation, and the moment the ball drops.",
     pdf: "/ArthurRobertson.pdf",
     metrics: [
       { value: "5.46M", label: "frames" },
       { value: "2,765", label: "valid spins" },
-      { value: "0.51s", label: "timing MAE" },
+      { value: "0.52s", label: "timing MAE" },
     ],
   },
 } as const;
